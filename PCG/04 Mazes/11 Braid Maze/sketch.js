@@ -3,8 +3,6 @@ let cell;             // current cell
 let visited = 0;      // terminate when all cells visited
 let steps = 100000;   // maximum number of steps, just to be sure
 
-let solver;
-
 let size_x = 12;
 let size_y = 9;
 blockSizeX = 20;
@@ -17,22 +15,15 @@ function setup() {
     cell.visited = true;
     visited++;
     fill(0);
-    strokeWeight(4);
     blockSizeX = width / size_x;
     blockSizeY = height / size_y;
-    while ((visited < size_x * size_y) && (--steps > 0)) {
+    while ((visited < size_x * size_y) && (--steps > 0))
         nextStep();
-    }
-    solver = new Solver(maze, maze.get(0, 0), maze.get(size_x-1,size_y-1));
-}
-
-function mouseReleased() {
-    solver.step();
+    removeDeadEnds();
 }
 
 function draw() {
     background(255);
-    stroke("black");
     for (let x = 0; x < size_x; x++) {
         for (let y = 0; y < size_y; y++) {
             if (maze.get(x, y).hasWall("n")) {
@@ -49,20 +40,6 @@ function draw() {
             }
         }
     }
-    stroke("red");
-    for (let i = 1; i < solver.trace.length; i++) {
-        let c = solver.trace[i];
-        let d = solver.trace[i-1];
-        line(c.col*blockSizeX + blockSizeX/2, c.row*blockSizeY+blockSizeY/2, d.col*blockSizeX+blockSizeX/2, d.row*blockSizeY+blockSizeY/2);
-    }
-    if (solver.trace.length>0) {
-        let c = solver.current;
-        let d = solver.trace[solver.trace.length - 1];
-        line(c.col * blockSizeX + blockSizeX / 2, c.row * blockSizeY + blockSizeY / 2, d.col * blockSizeX + blockSizeX / 2, d.row * blockSizeY + blockSizeY / 2);
-    }
-    if (!solver.solved) {
-        solver.step();
-    }
 }
 
 /**
@@ -72,6 +49,30 @@ function draw() {
 function initMaze(mazeSizeX, mazeSizeY) {
     maze = new Grid(mazeSizeX, mazeSizeY);
     // maze.get(1,1).edges[0].isWall = false;
+}
+
+function removeDeadEnds() {
+    // init grid, set all to visited = false
+    for (let r = 0; r < maze.rows; r++) {
+        for (let c = 0; c < maze.cols; c++) {
+            let cell = maze.get(c, r);
+            let walls = 0;
+            if (cell.hasWall("n")) walls++;
+            if (cell.hasWall("s")) walls++;
+            if (cell.hasWall("e")) walls++;
+            if (cell.hasWall("w")) walls++;
+            if (walls > 2 && cell.edges.length > 2) {
+                // it's a dead end, we need to remove one wall
+                for (let i = 0; i < cell.edges.length; i++) {
+                    if (cell.edges[i].isWall) {
+                        cell.edges[i].isWall = false;
+                        break;
+                    }
+                }
+
+            }
+        }
+    }
 }
 
 
@@ -90,45 +91,6 @@ function nextStep() {
     }
     // set new current
     cell = n.neighbour;
-}
-
-class Solver {
-    constructor(maze, start, end) {
-        this.grid = maze;
-        this.start = start;
-        this.end = end;
-        this.current = start;
-        this.trace = [];
-        this.solved = false;
-        // init grid, set all to visited = false
-        for (let r = 0; r < this.grid.rows; r++) {
-            for (let c = 0; c < this.grid.cols; c++) {
-                this.grid.get(c, r).visited = false;
-            }
-        }
-    }
-
-    step() {
-        if (this.solved) return; // do nothing if already solved
-        this.current.visited = true;
-        // get neighbours and select the ones not yet visited
-        let n = this.current.getConnectedNeighbours();
-        let unvisited = [];
-        for (let i = 0; i < n.length; i++) {
-            if (!n[i].visited)
-                unvisited.push(n[i]);
-        }
-        // if there is one not visited yet, put it on the stack
-        if (unvisited.length>0) {
-            this.trace.push(this.current);
-            this.current =  unvisited[Math.floor(Math.random() * unvisited.length)];
-            if (this.current === this.end)
-                this.solved = true;
-        } else {
-            // otherwise pop from stack
-            this.current = this.trace.pop();
-        }
-    }
 }
 
 class Grid {
@@ -191,21 +153,6 @@ class Node {
                 nodeOther = e.b;
             }
             neighbours.push({edge: e, neighbour: nodeOther});
-        }
-        return neighbours;
-    }
-
-    // get all neighbours, not separated by a wall.
-    getConnectedNeighbours() {
-        let neighbours = [];
-        for (let i = 0; i < this.edges.length; i++) {
-            let e = this.edges[i];
-            let nodeOther = e.a;
-            if (e.a === this) {
-                nodeOther = e.b;
-            }
-            if (!e.isWall)
-                neighbours.push(nodeOther);
         }
         return neighbours;
     }
