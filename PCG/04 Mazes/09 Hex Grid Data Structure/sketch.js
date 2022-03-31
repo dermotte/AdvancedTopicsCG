@@ -3,8 +3,8 @@ let cell;             // current cell
 let visited = 0;      // terminate when all cells visited
 let steps = 100000;   // maximum number of steps, just to be sure
 
-let size_x = 12;
-let size_y = 9;
+let size_x = 36;
+let size_y = 27;
 blockSizeX = 20;
 blockSizeY = 20;
 
