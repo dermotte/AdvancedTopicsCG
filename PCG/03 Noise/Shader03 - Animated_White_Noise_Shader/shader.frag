@@ -16,6 +16,7 @@ vec2 rand(vec2 p) {
 void main() {
   vec2 st = gl_FragCoord.xy/u_resolution.xy;
   // using time to vary the input for the PRNG
-  vec3 color = vec3(rand(st*fract(u_time)).x);
+  // float random = fract(sin(dot(uv.xy, vec2(12.9898,78.233)))* 43758.5453123);
+  vec3 color = vec3(rand(st*fract(u_time)).y);
   gl_FragColor = vec4(color,1.0);
 }

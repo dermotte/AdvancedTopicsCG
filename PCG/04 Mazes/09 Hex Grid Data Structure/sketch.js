@@ -27,7 +27,7 @@ function draw() {
     let hex_width = radius * Math.sqrt(3)
     let hs = hex_width / 2;
     stroke(0);
-    strokeWeight(4);
+    strokeWeight(2);
     for (let x = 0; x < size_x; x++) {
         for (let y = 0; y < size_y; y++) {
             let py = (y+1) * radius * 1.5;
