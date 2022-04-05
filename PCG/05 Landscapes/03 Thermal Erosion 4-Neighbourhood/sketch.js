@@ -1,6 +1,6 @@
 // initial height map noise
 let noiseVal;
-let noiseScale = 0.02;
+let noiseScale = 0.03;
 // buffer images for fast creation
 let buffer;
 let pxBuffer;
@@ -86,7 +86,6 @@ function createHeightMap() {
             noiseVal = noise((x) * noiseScale, (y) * noiseScale);
             // noiseVal = Math.floor(noiseVal*6)/6;
             writeColor(img, x, y, noiseVal*255);
-            // img.set(x, y, color(noiseVal * 255));
         }
     }
     original_noise = img;
@@ -95,6 +94,7 @@ function createHeightMap() {
     return img;
 }
 
+// much faster image writing ..
 function writeColor(image, x, y, val) {
     let index = (x + y * width) * 4;
     image.pixels[index] = val;

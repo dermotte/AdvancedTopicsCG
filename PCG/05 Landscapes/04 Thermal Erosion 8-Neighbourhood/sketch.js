@@ -47,19 +47,14 @@ function erodeHeightMap() {
         for (let x = 1; x < width - 1; x++) {
             let currentValue = img.pixels[offset(x, y)];
             let countLower = 0;
-            let countHigher = 0;
             // count how many neighbours are smaller ..
             for (let xx = -1; xx <= 1; xx++) {
                 for (let yy = -1; yy <= 1; yy++) {
                     if (currentValue - img.pixels[offset(x+xx, y+yy)] > erosionThreshold) {
                         countLower++;
                     }
-                    if (img.pixels[offset(x+xx, y+yy)]-currentValue > erosionThreshold) {
-                        countHigher++;
-                    }
                 }
             }
-            // console.log(countLower);
             // deposit some material there ..
             let oldHeight = currentValue
             if (countLower > 0) {
@@ -67,8 +62,9 @@ function erodeHeightMap() {
                 for (let xx = -1; xx <= 1; xx++) {
                     for (let yy = -1; yy <= 1; yy++) {
                         if (oldHeight - img.pixels[offset(x+xx, y+yy)] > erosionThreshold) {
-                            currentValue -= (oldHeight - img.pixels[offset(x+xx, y+yy)]) / (countLower + 1);
-                            writeColor(img, x+xx, y+yy, img.pixels[offset(x+xx, y+yy)] + (oldHeight - img.pixels[offset(x+xx, y+yy)]) / (countLower + 1));
+                            let distance = (oldHeight - img.pixels[offset(x+xx, y+yy)]) / (countLower + 1);
+                            currentValue -= distance;
+                            writeColor(img, x+xx, y+yy, img.pixels[offset(x+xx, y+yy)] + distance);
                         }
                     }
                 }
