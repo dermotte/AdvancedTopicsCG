@@ -1,11 +1,14 @@
-let x_resolution = 50;
-let y_resolution = 50;
+let x_resolution = 75;
+let y_resolution = 75;
 let noiseScale = 0.02;
-let z_scale = 3;
+let z_scale = 10;
+let mainScale = 50;
 let noiseSamples;
+let cameraY = 200;
 
 function setup() {
-    createCanvas(640, 480, WEBGL);
+    let canvas = createCanvas(1280, 720, WEBGL);
+    // canvas.mouseWheel(changeSize);
     createheightMap();
 }
 
@@ -22,15 +25,18 @@ function createheightMap() {
             noiseSamples[noiseSamples.length-1].push(noise((x) * noiseScale, (y) * noiseScale));
         }
     }
+    // noStroke();
 }
 
 function draw() {
     background(220);
+    pointLight(250, 250, 250, -x_resolution/2*mainScale, -y_resolution/2*mainScale, 150);
+    camera(0, 0, cameraY, 0, 0, 0)
+    directionalLight(0, 250, 0, 1, 1, 0);
     rotateY(radians(mouseX));
-    scale(50);
+    scale(mainScale);
     rotateX(PI / 2);
-    translate(-5, -5, -5);
-
+    translate(-x_resolution/2, 2*-y_resolution/3, -z_scale);
     beginShape(TRIANGLES);
 
     for (let y = 0; y < y_resolution-1; y++) {
@@ -51,4 +57,12 @@ function draw() {
     }
 
     endShape();
+}
+
+function changeSize(event) {
+    if (event.deltaY > 0) {
+        cameraY = cameraY + 50;
+    } else {
+        cameraY = cameraY - 50;
+    }
 }
