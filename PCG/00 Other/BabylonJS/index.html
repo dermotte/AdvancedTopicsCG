@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+
+    <title>Babylon.js sample code</title>
+
+    <!-- Babylon.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dat-gui/0.6.2/dat.gui.min.js"></script>
+    <script src="https://assets.babylonjs.com/generated/Assets.js"></script>
+    <script src="https://preview.babylonjs.com/ammo.js"></script>
+    <script src="https://preview.babylonjs.com/cannon.js"></script>
+    <script src="https://preview.babylonjs.com/Oimo.js"></script>
+    <script src="https://preview.babylonjs.com/earcut.min.js"></script>
+    <script src="https://preview.babylonjs.com/babylon.js"></script>
+    <script src="https://preview.babylonjs.com/materialsLibrary/babylonjs.materials.min.js"></script>
+    <script src="https://preview.babylonjs.com/proceduralTexturesLibrary/babylonjs.proceduralTextures.min.js"></script>
+    <script src="https://preview.babylonjs.com/postProcessesLibrary/babylonjs.postProcess.min.js"></script>
+    <script src="https://preview.babylonjs.com/loaders/babylonjs.loaders.js"></script>
+    <script src="https://preview.babylonjs.com/serializers/babylonjs.serializers.min.js"></script>
+    <script src="https://preview.babylonjs.com/gui/babylon.gui.min.js"></script>
+    <script src="https://preview.babylonjs.com/inspector/babylon.inspector.bundle.js"></script>
+
+    <style>
+        html, body {
+            overflow: hidden;
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
+
+        #renderCanvas {
+            width: 100%;
+            height: 100%;
+            touch-action: none;
+        }
+    </style>
+</head>
+<body>
+<canvas id="renderCanvas"></canvas>
+<script>
+    var canvas = document.getElementById("renderCanvas");
+    var maze;
+    let cell;             // current cell
+    let visited = 0;      // terminate when all cells visited
+    let steps = 100000;   // maximum number of steps, just to be sure
+
+    let size_x = 12;
+    let size_y = 9;
+
+    var startRenderLoop = function (engine, canvas) {
+        engine.runRenderLoop(function () {
+            if (sceneToRender && sceneToRender.activeCamera) {
+                sceneToRender.render();
+            }
+        });
+    }
+
+    var engine = null;
+    var scene = null;
+    var sceneToRender = null;
+    var createDefaultEngine = function () {
+        return new BABYLON.Engine(canvas, true, {
+            preserveDrawingBuffer: true,
+            stencil: true,
+            disableWebGL2Support: false
+        });
+    };
+
+    var createScene = function () {
+        // init & create maze:
+        initMaze(size_x, size_y);
+        cell = maze.get(0, 0);
+        cell.visited = true;
+        visited++;
+        while ((visited < size_x * size_y) && (--steps > 0)) {
+            nextStep();
+        }
+
+        var scene = new BABYLON.Scene(engine);
+        var camera = new BABYLON.FreeCamera("UniversalCamera", new BABYLON.Vector3(0, 10, -50), scene);
+        camera.setTarget(BABYLON.Vector3.Zero());
+        camera.attachControl(canvas, true);
+
+        //Set gravity for the scene (G force like, on Y-axis)
+        scene.gravity = new BABYLON.Vector3(0, -0.15, 0);
+
+        camera.applyGravity = true;
+        camera.ellipsoid = new BABYLON.Vector3(2, 1, 2);
+        // camera.collisionRadius = new BABYLON.Vector3(3,3,3);
+        // Enable Collisions
+        scene.collisionsEnabled = true;
+        //Then apply collisions and gravity to the active camera
+        camera.checkCollisions = true;
+
+
+        // This creates a light, aiming 0,1,0 - to the sky (non-mesh)
+        var light = new BABYLON.HemisphericLight("light", new BABYLON.Vector3(-2, 1, 0), scene);
+
+        // Default intensity is 1. Let's dim the light a small amount
+        light.intensity = 0.7;
+
+        // var b1 = BABYLON.MeshBuilder.CreateBox("box01", {width: 3, height: 3, depth: 1}, scene);
+        // var b2 = BABYLON.MeshBuilder.CreateBox("box02", {width: 1, height: 3, depth: 3}, scene);
+        let walls = [];
+        for (let x = 0; x < size_x; x++) {
+            for (let y = 0; y < size_y; y++) {
+                if (maze.get(x, y).hasWall("n") && !(x===0 && y===0)) {
+                    let box = BABYLON.MeshBuilder.CreateBox("boxn"+x*y+y, {width: 10, height: 10, depth: 1}, scene);
+                    box.position = new BABYLON.Vector3(x*10, 5, y*10-5);
+                    box.checkCollisions = true;
+                    walls.push(box);
+                    // line(x * blockSizeX, y * blockSizeY, (x + 1) * blockSizeX, y * blockSizeY);
+                }
+                if (maze.get(x, y).hasWall("w")) {
+                    let box = BABYLON.MeshBuilder.CreateBox("boxw"+x*y+y, {width: 1, height: 10, depth: 10}, scene);
+                    box.position = new BABYLON.Vector3(x*10-5, 5, y*10);
+                    box.checkCollisions = true;
+                    walls.push(box);
+                }
+                if (maze.get(x, y).hasWall("e")) {
+                    let box = BABYLON.MeshBuilder.CreateBox("boxe"+x*y+y, {width: 1, height: 10, depth: 10}, scene);
+                    box.position = new BABYLON.Vector3(10*x+5, 5, y*10);
+                    box.checkCollisions = true;
+                    walls.push(box);
+                }
+                if (maze.get(x, y).hasWall("s")&& !(x===size_x-1 && y===size_y-1)) {
+                    let box = BABYLON.MeshBuilder.CreateBox("boxs"+x*y+y, {width: 10, height: 10, depth: 1}, scene);
+                    box.position = new BABYLON.Vector3(x*10, 5, y*10+5);
+                    box.checkCollisions = true;
+                    walls.push(box);
+                }
+            }
+        }
+
+        var box = BABYLON.Mesh.CreateBox('SkyBox', 1000, scene, false, BABYLON.Mesh.BACKSIDE);
+        box.material = new BABYLON.SkyMaterial('sky', scene);
+        box.material.inclination = -0.35;
+
+
+        // Our built-in 'ground' shape.
+        var ground = BABYLON.MeshBuilder.CreateGround("ground", {width: size_x*40, height: size_y*40}, scene);
+        // ground.position = new BABYLON.Vector3(size_x,0, size_y);
+        ground.checkCollisions = true;
+        return scene;
+    };
+    window.initFunction = async function () {
+
+
+        var asyncEngineCreation = async function () {
+            try {
+                return createDefaultEngine();
+            } catch (e) {
+                console.log("the available createEngine function failed. Creating the default engine instead");
+                return createDefaultEngine();
+            }
+        }
+
+        window.engine = await asyncEngineCreation();
+        if (!engine) throw 'engine should not be null.';
+        startRenderLoop(engine, canvas);
+        window.scene = createScene();
+    };
+    initFunction().then(() => {
+        sceneToRender = scene
+    });
+
+    // Resize
+    window.addEventListener("resize", function () {
+        engine.resize();
+    });
+
+    /**
+     generates a maze with (x,y) cells. Note that the actual maze is
+     larger as the maze cells are divided by rows and cols of walls.
+     */
+    function initMaze(mazeSizeX, mazeSizeY) {
+        maze = new Grid(mazeSizeX, mazeSizeY);
+        // maze.get(1,1).edges[0].isWall = false;
+    }
+
+
+    function nextStep() {
+        // while there are unvisited cells
+        // pick random neighbour
+        let nl = cell.getNeighbours();
+        let n = nl[Math.floor(Math.random() * nl.length)];
+        if (!n.neighbour.visited) { // unvisited
+            // set to visited
+            n.neighbour.visited = true;
+            // remove wall
+            n.edge.isWall = false;
+            // termination condition
+            visited++;
+        }
+        // set new current
+        cell = n.neighbour;
+    }
+
+    class Grid {
+        constructor(sizeX, sizeY) {
+            this.visited = false;
+            this.rows = sizeY;
+            this.cols = sizeX;
+            this.arr = new Array(this.rows).fill().map(() => Array(this.cols));
+            // create all Nodes ..
+            for (let r = 0; r < this.rows; r++) {
+                for (let c = 0; c < this.cols; c++) {
+                    this.arr[r][c] = new Node(c, r);
+                }
+            }
+            // create all Edges ..
+            for (let r = 0; r < this.rows; r++) {
+                for (let c = 0; c < this.cols; c++) {
+                    if (r < this.rows - 1) {
+                        // add edge south
+                        let e = new Edge(this.arr[r][c], this.arr[r + 1][c]);
+                    }
+                    if (c < this.cols - 1) {
+                        // add edge west
+                        let e = new Edge(this.arr[r][c], this.arr[r][c + 1]);
+                    }
+                }
+            }
+        }
+
+        get(x, y) {
+            return this.arr[y][x];
+        }
+    }
+
+    class Node {
+        constructor(x, y) {
+            this.col = x;
+            this.row = y;
+            this.edges = [];
+            this.walls = {
+                s: true, n: true, w: true, e: true
+            }
+        }
+
+        addEdge(newEdge) {
+            this.edges.push(newEdge);
+        }
+
+        hasWall(direction) {
+            this.evaluateWalls();
+            return this.walls[direction];
+        }
+
+        getNeighbours() {
+            let neighbours = [];
+            for (let i = 0; i < this.edges.length; i++) {
+                let e = this.edges[i];
+                let nodeOther = e.a;
+                if (e.a === this) {
+                    nodeOther = e.b;
+                }
+                neighbours.push({edge: e, neighbour: nodeOther});
+            }
+            return neighbours;
+        }
+
+        evaluateWalls() {
+            for (let i = 0; i < this.edges.length; i++) {
+                let e = this.edges[i];
+                let nodeOther = e.a;
+                if (e.a === this) {
+                    nodeOther = e.b;
+                }
+                if (this.row === nodeOther.row) { // horizontal: east or west
+                    if (this.col < nodeOther.col) this.walls["e"] = e.isWall;
+                    else this.walls["w"] = e.isWall;
+                } else { // vertical: north or south
+                    if (this.row < nodeOther.row) this.walls["s"] = e.isWall;
+                    else this.walls["n"] = e.isWall;
+                }
+            }
+        }
+    }
+
+    class Edge {
+        constructor(nodeA, nodeB) {
+            this.a = nodeA;
+            this.b = nodeB;
+            nodeA.addEdge(this);
+            nodeB.addEdge(this);
+            this.isWall = true;
+        }
+    }
+</script>
+</body>
+</html>
