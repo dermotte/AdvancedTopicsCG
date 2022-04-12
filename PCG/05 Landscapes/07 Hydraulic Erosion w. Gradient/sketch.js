@@ -9,9 +9,9 @@ let original_noise;
 let showOriginal = false;
 // hydraulic erosion parameters
 let rain_amount = 4; // how much rain per iteration
-let solubility = 0.2 // how much soil is eroded by one unit of water
-let evaporation = 0.5; // how much water evaporates each step?
-let capacity = 0.3;    // how much soil can be carried by one unit of water
+let solubility = 0.7 // how much soil is eroded by one unit of water
+let evaporation = 0.6; // how much water evaporates each step?
+let capacity = 0.5;    // how much soil can be carried by one unit of water
 let iterations = 0;  // current number of iterations
 // data tables
 let table_terrain = [];
@@ -63,7 +63,7 @@ function erodeHeightMap() {
             table_water[y][x] += rain_amount;
             // erosion
             let eroded_sediment = table_water[y][x] * solubility;
-            eroded_sediment = min(table_terrain[y][x], eroded_sediment); // make sure not more than available is eroded
+            eroded_sediment = Math.min(table_terrain[y][x], eroded_sediment); // make sure not more than available is eroded
             table_sediment[y][x] += eroded_sediment;
             table_terrain[y][x] -= eroded_sediment;
             // downhill movement
@@ -71,11 +71,15 @@ function erodeHeightMap() {
             let gradient = getGradient(x, y);
             let amount = gradient.mag();
             gradient.normalize();
-            let moveToX = -Math.round(x + gradient.x);
-            let moveToY = -Math.round(y + gradient.y);
-            if (x + moveToX > 0 && x + moveToX < noise_width - 1 && y + moveToY > 0 && y + moveToY < noise_height - 1) {
+            let ang = Math.round(gradient.angleBetween(createVector(1, 0)) * 4 / Math.PI + 4);
+            if (!isNaN(ang)) ang = Math.round(Math.random() * 8); // random for flats ..
+            let directions = [[-1, 0], [-1, -1], [0, -1], [1, -1], [1, 0], [1, 1], [0, 1], [-1, 1], [-1, 0]];
+            let moveToX = directions[ang][0];
+            let moveToY = directions[ang][1];
+            if (x + moveToX > 0 && x + moveToX < noise_width - 1
+                && y + moveToY > 0 && y + moveToY < noise_height - 1) {
                 let sedimentToMove = table_sediment[y][x]; // how much sediment can be moved ..
-                let waterToMove = table_water[y][x]
+                let waterToMove = table_water[y][x];
                 table_sediment_moved[y + moveToY][x + moveToX] += sedimentToMove;
                 table_sediment_moved[y][x] -= sedimentToMove;
                 table_water_moved[y + moveToY][x + moveToX] += waterToMove;
@@ -111,6 +115,7 @@ function evaporateAndUpdate() {
     // configure noise
     for (let y = 0; y < noise_height; y++) {
         for (let x = 0; x < noise_width; x++) {
+            // writeColor(img, x, y, table_terrain[y][x]);
             writeColor(img, x, y, table_terrain[y][x] + table_sediment[y][x]);
         }
     }
@@ -121,16 +126,16 @@ function evaporateAndUpdate() {
 
 // using sobel
 function getGradient(x, y) {
-    let gx = terr(x - 1, y - 1) + terr(x - 1, y) + terr(x - 1, y + 1) -
-        (terr(x + 1, y - 1) + terr(x + 1, y) + terr(x + 1, y + 1));
-    let gy = terr(x - 1, y - 1) + terr(x, y - 1) + terr(x + 1, y - 1) -
-        (terr(x - 1, y + 1) + terr(x, y + 1) + terr(x + 1, y + 1));
+    let gy = terr(x - 1, y - 1) + 2 * terr(x - 1, y) + terr(x - 1, y + 1) -
+        (terr(x + 1, y - 1) + 2 * terr(x + 1, y) + terr(x + 1, y + 1));
+    let gx = terr(x - 1, y - 1) + 2 * terr(x, y - 1) + terr(x + 1, y - 1) -
+        (terr(x - 1, y + 1) + 2 * terr(x, y + 1) + terr(x + 1, y + 1));
     return createVector(gx, gy);
 }
 
 function terr(x, y) {
-    let xx = max(0, min(noise_width - 1, x))
-    let yy = max(0, min(noise_height - 1, y))
+    let xx = Math.max(0, Math.min(noise_width - 1, x));
+    let yy = Math.max(0, Math.min(noise_height - 1, y));
     return table_terrain[yy][xx];
 }
 

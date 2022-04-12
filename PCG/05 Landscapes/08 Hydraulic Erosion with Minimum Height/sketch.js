@@ -63,7 +63,7 @@ function erodeHeightMap() {
             table_water[y][x] += rain_amount;
             // erosion
             let eroded_sediment = table_water[y][x] * solubility;
-            eroded_sediment = min(table_terrain[y][x], eroded_sediment); // make sure not more than available is eroded
+            eroded_sediment = Math.min(table_terrain[y][x], eroded_sediment); // make sure not more than available is eroded
             table_sediment[y][x] += eroded_sediment;
             table_terrain[y][x] -= eroded_sediment;
             // downhill movement
@@ -173,8 +173,8 @@ function getGradient(x, y) {
 }
 
 function terr(x, y) {
-    let xx = max(0, min(noise_width - 1, x))
-    let yy = max(0, min(noise_height - 1, y))
+    let xx = Math.max(0, Math.min(noise_width - 1, x))
+    let yy = Math.max(0, Math.min(noise_height - 1, y))
     return table_terrain[yy][xx];
 }
 

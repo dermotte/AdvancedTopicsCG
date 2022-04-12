@@ -11,7 +11,7 @@ let showOriginal = false;
 let erode = true;
 let showWater = true;
 // hydraulic erosion parameters
-let rain_amount = 8;   // how much rain per iteration
+let rain_amount = 0.7;   // how much rain per iteration
 let solubility = 0.2;   // how much soil is eroded by one unit of water
 let evaporation = 0.8; // how much water evaporates each step?
 let capacity = 0.1;    // how much soil can be carried by one unit of water
@@ -129,13 +129,15 @@ function evaporateAndUpdate() {
         }
     }
     water_overlay.updatePixels();
-    console.log(maxWater);
+    // console.log(maxWater);
     let img = createImage(noise_width, noise_height);
     img.loadPixels();
     // configure noise
     for (let y = 0; y < noise_height; y++) {
         for (let x = 0; x < noise_width; x++) {
-            writeColor(img, x, y, table_terrain[y][x] + table_sediment[y][x]);
+            writeColor(img, x, y, table_terrain[y][x]);
+            // use if you want to show how much soil is in the water ..
+            // writeColor(img, x, y, table_terrain[y][x] + table_sediment[y][x]);
         }
     }
     img.updatePixels();
