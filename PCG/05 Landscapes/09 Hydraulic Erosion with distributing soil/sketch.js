@@ -11,10 +11,11 @@ let showOriginal = false;
 let erode = true;
 let showWater = true;
 // hydraulic erosion parameters
-let rain_amount = 0.7;   // how much rain per iteration
-let solubility = 0.2;   // how much soil is eroded by one unit of water
-let evaporation = 0.8; // how much water evaporates each step?
-let capacity = 0.1;    // how much soil can be carried by one unit of water
+let rain_amount = 5;   // how much rain per iteration
+let solubility = 0.1;   // how much soil is eroded by one unit of water
+let evaporation = 0.3; // how much water evaporates each step?
+let capacity = 2;    // how much soil can be carried by one unit of water
+let deposition = 0.1;  // how much soil is deposited if water does not move
 let iterations = 0;    // current number of iterations
 // data tables
 let table_terrain = [];
@@ -68,14 +69,16 @@ function erodeHeightMap() {
     for (let y = 0; y < noise_height; y++) {
         for (let x = 0; x < noise_width; x++) {
             // rainfall
-            table_water[y][x] += rain_amount;
+            if (iterations % 10 == 0) // every n-th iteration it rains ..
+                table_water[y][x] += rain_amount;
             // erosion
-            let eroded_sediment = table_water[y][x] * solubility;
-            eroded_sediment = min(table_terrain[y][x], eroded_sediment); // make sure not more than available is eroded
+            // let eroded_sediment = table_water[y][x] * solubility;
+            // eroded_sediment = min(table_terrain[y][x], eroded_sediment); // make sure not more than available is eroded
+            let eroded_sediment = Math.min(Math.max(0, table_water[y][x]*capacity-table_sediment[y][x]), table_water[y][x] * solubility, table_terrain[y][x]); // make sure it does not exceed the capacity
             table_sediment[y][x] += eroded_sediment;
             table_terrain[y][x] -= eroded_sediment;
             // downhill movement
-            if (x > 1 && x < noise_width - 2 && y > 1 && y < noise_height - 2) {
+            if (x > 1 && x < noise_width - 2 && y > 1 && y < noise_height - 2 && table_water[y][x] > 1) {
                 let sedimentToMove = table_sediment[y][x]; // how much sediment can be moved ..
                 let waterToMove = table_water[y][x];
                 let mov = computeMovement(x, y);
@@ -93,6 +96,12 @@ function erodeHeightMap() {
                 }
                 table_sediment_moved[y][x] -= rem_sed;
                 table_water_moved[y][x] -= rem_wat;
+                if (rem_wat < 0.1) {
+                    // deposit here ..
+                    let s = table_sediment[y][x] * deposition;
+                    table_sediment_moved[y][x] -= s;
+                    table_terrain[y][x] += s;
+                }
             }
         }
     }
@@ -125,7 +134,7 @@ function evaporateAndUpdate() {
     water_overlay.loadPixels();
     for (let y = 0; y < noise_height; y++) {
         for (let x = 0; x < noise_width; x++) {
-            writeRGBColor(water_overlay, x, y, 0, 0, 255, map(table_water[y][x], 0, maxWater, 0, 255));
+            writeRGBColor(water_overlay, x, y, 0, 0, 255, map(table_water[y][x], 0, maxWater, 0, 196));
         }
     }
     water_overlay.updatePixels();
@@ -145,12 +154,12 @@ function evaporateAndUpdate() {
 }
 
 function computeMovement(x, y) {
-    let a = table_terrain[y][x];
+    let a = table_terrain[y][x] + table_water[y][x];
     let amount = [[0, 0, 0], [0, 0, 0], [0, 0, 0]];
     let sum = 0;
     for (let yy = -1; yy <= 1; yy++) {
         for (let xx = -1; xx <= 1; xx++) {
-            amount[yy + 1][xx + 1] = table_terrain[y + yy][x + xx] - a;
+            amount[yy + 1][xx + 1] = (table_terrain[y + yy][x + xx] + table_water[y + yy][x + xx]) - a;
             amount[yy + 1][xx + 1] = Math.min(amount[yy + 1][xx + 1], 0);
             sum  += amount[yy + 1][xx + 1];
         }

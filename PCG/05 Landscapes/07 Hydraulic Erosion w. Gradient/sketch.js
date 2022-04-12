@@ -8,10 +8,10 @@ let buffer;
 let original_noise;
 let showOriginal = false;
 // hydraulic erosion parameters
-let rain_amount = 4; // how much rain per iteration
-let solubility = 0.7 // how much soil is eroded by one unit of water
+let rain_amount = 1; // how much rain per iteration
+let solubility = 0.3; // how much soil is eroded by one unit of water
 let evaporation = 0.6; // how much water evaporates each step?
-let capacity = 0.5;    // how much soil can be carried by one unit of water
+let capacity = 2;    // how much soil can be carried by one unit of water
 let iterations = 0;  // current number of iterations
 // data tables
 let table_terrain = [];
@@ -60,10 +60,12 @@ function erodeHeightMap() {
     for (let y = 0; y < noise_height; y++) {
         for (let x = 0; x < noise_width; x++) {
             // rainfall
-            table_water[y][x] += rain_amount;
+            // if (iterations % 10 == 1)
+                table_water[y][x] += rain_amount;
             // erosion
-            let eroded_sediment = table_water[y][x] * solubility;
-            eroded_sediment = Math.min(table_terrain[y][x], eroded_sediment); // make sure not more than available is eroded
+            // let eroded_sediment = table_water[y][x] * solubility; // maximum we can erode
+            // eroded_sediment = Math.min(table_terrain[y][x], eroded_sediment); // make sure not more than available is eroded
+            let eroded_sediment = Math.min(table_water[y][x]*capacity-table_sediment[y][x], table_water[y][x] * solubility, table_terrain[y][x]); // make sure it does not exceed the capacity
             table_sediment[y][x] += eroded_sediment;
             table_terrain[y][x] -= eroded_sediment;
             // downhill movement
@@ -72,18 +74,23 @@ function erodeHeightMap() {
             let amount = gradient.mag();
             gradient.normalize();
             let ang = Math.round(gradient.angleBetween(createVector(1, 0)) * 4 / Math.PI + 4);
-            if (!isNaN(ang)) ang = Math.round(Math.random() * 8); // random for flats ..
-            let directions = [[-1, 0], [-1, -1], [0, -1], [1, -1], [1, 0], [1, 1], [0, 1], [-1, 1], [-1, 0]];
-            let moveToX = directions[ang][0];
-            let moveToY = directions[ang][1];
-            if (x + moveToX > 0 && x + moveToX < noise_width - 1
-                && y + moveToY > 0 && y + moveToY < noise_height - 1) {
-                let sedimentToMove = table_sediment[y][x]; // how much sediment can be moved ..
-                let waterToMove = table_water[y][x];
-                table_sediment_moved[y + moveToY][x + moveToX] += sedimentToMove;
-                table_sediment_moved[y][x] -= sedimentToMove;
-                table_water_moved[y + moveToY][x + moveToX] += waterToMove;
-                table_water_moved[y][x] -= waterToMove;
+            if (isNaN(ang)) {
+                let s = table_sediment[y][x] * deposition;
+                table_sediment_moved[y][x] -= s;
+                table_terrain[y][x] += s;
+            } else {
+                let directions = [[-1, 0], [-1, -1], [0, -1], [1, -1], [1, 0], [1, 1], [0, 1], [-1, 1], [-1, 0]];
+                let moveToX = directions[ang][0];
+                let moveToY = directions[ang][1];
+                if (x + moveToX > 0 && x + moveToX < noise_width - 1
+                    && y + moveToY > 0 && y + moveToY < noise_height - 1 && table_water[y][x] > 1) {
+                    let sedimentToMove = table_sediment[y][x]; // how much sediment can be moved ..
+                    let waterToMove = table_water[y][x];
+                    table_sediment_moved[y + moveToY][x + moveToX] += sedimentToMove;
+                    table_sediment_moved[y][x] -= sedimentToMove;
+                    table_water_moved[y + moveToY][x + moveToX] += waterToMove;
+                    table_water_moved[y][x] -= waterToMove;
+                }
             }
         }
     }
@@ -136,7 +143,7 @@ function getGradient(x, y) {
 function terr(x, y) {
     let xx = Math.max(0, Math.min(noise_width - 1, x));
     let yy = Math.max(0, Math.min(noise_height - 1, y));
-    return table_terrain[yy][xx];
+    return table_terrain[yy][xx]+table_water[yy][xx];
 }
 
 

@@ -8,10 +8,10 @@ let buffer;
 let original_noise;
 let showOriginal = false;
 // hydraulic erosion parameters
-let rain_amount = 4;   // how much rain per iteration
-let solubility = 0.1   // how much soil is eroded by one unit of water
+let rain_amount = 3;   // how much rain per iteration
+let solubility = 0.05;   // how much soil is eroded by one unit of water
 let evaporation = 0.6; // how much water evaporates each step?
-let capacity = 0.3;    // how much soil can be carried by one unit of water
+let capacity = 5;    // how much soil can be carried by one unit of water
 let iterations = 0;    // current number of iterations
 // data tables
 let table_terrain = [];
@@ -60,14 +60,16 @@ function erodeHeightMap() {
     for (let y = 0; y < noise_height; y++) {
         for (let x = 0; x < noise_width; x++) {
             // rainfall
-            table_water[y][x] += rain_amount;
+            if (iterations%10==1)
+                table_water[y][x] += rain_amount;
             // erosion
-            let eroded_sediment = table_water[y][x] * solubility;
-            eroded_sediment = Math.min(table_terrain[y][x], eroded_sediment); // make sure not more than available is eroded
+            // let eroded_sediment = table_water[y][x] * solubility;
+            // eroded_sediment = Math.min(table_terrain[y][x], eroded_sediment); // make sure not more than available is eroded
+            let eroded_sediment = Math.min(Math.max(0, table_water[y][x]*capacity-table_sediment[y][x]), table_water[y][x] * solubility, table_terrain[y][x]); // make sure it does not exceed the capacity
             table_sediment[y][x] += eroded_sediment;
             table_terrain[y][x] -= eroded_sediment;
             // downhill movement
-            if (x > 1 && x < noise_width - 2 && y > 1 && y < noise_height - 2) {
+            if (x > 1 && x < noise_width - 2 && y > 1 && y < noise_height - 2 && table_water[y][x] > 1) {
                 let mov = computeMovementDirection(x, y);
                 let sedimentToMove = table_sediment[y][x]; // how much sediment can be moved ..
                 let waterToMove = table_water[y][x];
@@ -75,23 +77,7 @@ function erodeHeightMap() {
                 table_water_moved[y + mov.y][x + mov.x] += waterToMove;
                 table_sediment_moved[y][x] -= sedimentToMove;
                 table_water_moved[y][x] -= waterToMove;
-                // let sedimentToMove = table_sediment[y][x]; // how much sediment can be moved ..
-                // let waterToMove = table_water[y][x];
-                // let mov = computeMovement(x, y);
-                // let rem_sed = 0;
-                // let rem_wat = 0;
-                // for (let yy = -1; yy <= 1; yy++) {
-                //     for (let xx = -1; xx <= 1; xx++) {
-                //         if (!(xx === 0 && yy === 0) && mov[yy + 1][xx + 1] > 0.99) {
-                //             table_sediment_moved[y + yy][x + xx] += sedimentToMove * mov[yy + 1][xx + 1];
-                //             rem_sed += sedimentToMove * mov[yy + 1][xx + 1];
-                //             table_water_moved[y + yy][x + xx] += waterToMove * mov[yy + 1][xx + 1];
-                //             rem_wat += waterToMove * mov[yy + 1][xx + 1]
-                //         }
-                //     }
-                // }
-                // table_sediment_moved[y][x] -= rem_sed;
-                // table_water_moved[y][x] -= rem_wat;
+
             }
         }
     }
@@ -131,12 +117,12 @@ function evaporateAndUpdate() {
 }
 
 function computeMovement(x, y) {
-    let a = table_terrain[y][x];
+    let a = table_terrain[y][x] + table_water[y][x];
     let amount = [[0, 0, 0], [0, 0, 0], [0, 0, 0]];
     let min = 0;
     for (let yy = -1; yy <= 1; yy++) {
         for (let xx = -1; xx <= 1; xx++) {
-            amount[yy + 1][xx + 1] = table_terrain[y + yy][x + xx] - a;
+            amount[yy + 1][xx + 1] = (table_terrain[y + yy][x + xx] + table_water[y + yy][x + xx]) - a;
             amount[yy + 1][xx + 1] = Math.min(amount[yy + 1][xx + 1], 0);
             min = Math.min(amount[yy + 1][xx + 1], min);
         }
@@ -155,7 +141,7 @@ function computeMovementDirection(x, y) {
     let result = {x: 0, y: 0};
     for (let yy = 0; yy < 3; yy++) {
         for (let xx = 0; xx < 3; xx++) {
-            if (a[yy][xx] > 0.1) {
+            if (a[yy][xx] > 1) {
                 result = {x: xx - 1, y: yy - 1};
             }
         }
