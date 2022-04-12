@@ -5,13 +5,16 @@ let noise_width = 640;
 let noise_height = 360;
 // buffer images for fast creation visualization
 let buffer;
+let water_overlay;
 let original_noise;
 let showOriginal = false;
+let erode = true;
+let showWater = true;
 // hydraulic erosion parameters
-let rain_amount = 4;   // how much rain per iteration
-let solubility = 0.1   // how much soil is eroded by one unit of water
-let evaporation = 0.6; // how much water evaporates each step?
-let capacity = 0.3;    // how much soil can be carried by one unit of water
+let rain_amount = 8;   // how much rain per iteration
+let solubility = 0.2;   // how much soil is eroded by one unit of water
+let evaporation = 0.8; // how much water evaporates each step?
+let capacity = 0.1;    // how much soil can be carried by one unit of water
 let iterations = 0;    // current number of iterations
 // data tables
 let table_terrain = [];
@@ -24,7 +27,8 @@ function setup() {
     buffer = createImage(noise_width, noise_height);
     buffer = createHeightMap();
     original_noise = buffer;
-    frameRate(12);
+    water_overlay = buffer;
+    frameRate(6);
 }
 
 function draw() {
@@ -36,8 +40,12 @@ function draw() {
         text("original noise", 20, 20);
     } else {
         image(buffer, 0, 0);
-        text(++iterations + " hydraulic erosion iterations", 20, 20);
-        buffer = erodeHeightMap();
+        if (showWater) image(water_overlay, 0, 0);
+        // if (iterations < 30) {
+            text(++iterations + " hydraulic erosion iterations", 20, 20);
+            buffer = erodeHeightMap();
+        // }
+
     }
     // buffer = erodeHeightMap();
 }
@@ -68,30 +76,23 @@ function erodeHeightMap() {
             table_terrain[y][x] -= eroded_sediment;
             // downhill movement
             if (x > 1 && x < noise_width - 2 && y > 1 && y < noise_height - 2) {
-                let mov = computeMovementDirection(x, y);
                 let sedimentToMove = table_sediment[y][x]; // how much sediment can be moved ..
                 let waterToMove = table_water[y][x];
-                table_sediment_moved[y + mov.y][x + mov.x] += sedimentToMove;
-                table_water_moved[y + mov.y][x + mov.x] += waterToMove;
-                table_sediment_moved[y][x] -= sedimentToMove;
-                table_water_moved[y][x] -= waterToMove;
-                // let sedimentToMove = table_sediment[y][x]; // how much sediment can be moved ..
-                // let waterToMove = table_water[y][x];
-                // let mov = computeMovement(x, y);
-                // let rem_sed = 0;
-                // let rem_wat = 0;
-                // for (let yy = -1; yy <= 1; yy++) {
-                //     for (let xx = -1; xx <= 1; xx++) {
-                //         if (!(xx === 0 && yy === 0) && mov[yy + 1][xx + 1] > 0.99) {
-                //             table_sediment_moved[y + yy][x + xx] += sedimentToMove * mov[yy + 1][xx + 1];
-                //             rem_sed += sedimentToMove * mov[yy + 1][xx + 1];
-                //             table_water_moved[y + yy][x + xx] += waterToMove * mov[yy + 1][xx + 1];
-                //             rem_wat += waterToMove * mov[yy + 1][xx + 1]
-                //         }
-                //     }
-                // }
-                // table_sediment_moved[y][x] -= rem_sed;
-                // table_water_moved[y][x] -= rem_wat;
+                let mov = computeMovement(x, y);
+                let rem_sed = 0;
+                let rem_wat = 0;
+                for (let yy = -1; yy <= 1; yy++) {
+                    for (let xx = -1; xx <= 1; xx++) {
+                        if (!(xx === 0 && yy === 0)) {
+                            table_sediment_moved[y + yy][x + xx] += sedimentToMove * mov[yy + 1][xx + 1];
+                            rem_sed += sedimentToMove * mov[yy + 1][xx + 1];
+                            table_water_moved[y + yy][x + xx] += waterToMove * mov[yy + 1][xx + 1];
+                            rem_wat += waterToMove * mov[yy + 1][xx + 1]
+                        }
+                    }
+                }
+                table_sediment_moved[y][x] -= rem_sed;
+                table_water_moved[y][x] -= rem_wat;
             }
         }
     }
@@ -105,10 +106,12 @@ function erodeHeightMap() {
 }
 
 function evaporateAndUpdate() {
+    let maxWater = 0;
     for (let y = 0; y < noise_height; y++) {
         for (let x = 0; x < noise_width; x++) {
             // evaporation in the water table
             table_water[y][x] -= table_water[y][x] * evaporation;
+            maxWater = Math.max(table_water[y][x], maxWater);
             // dropping sediment according to current water level
             let overflow = table_water[y][x] * capacity - table_sediment[y][x];
             if (overflow < 0) {
@@ -118,6 +121,15 @@ function evaporateAndUpdate() {
         }
     }
 
+    water_overlay = createImage(noise_width, noise_height);
+    water_overlay.loadPixels();
+    for (let y = 0; y < noise_height; y++) {
+        for (let x = 0; x < noise_width; x++) {
+            writeRGBColor(water_overlay, x, y, 0, 0, 255, map(table_water[y][x], 0, maxWater, 0, 255));
+        }
+    }
+    water_overlay.updatePixels();
+    console.log(maxWater);
     let img = createImage(noise_width, noise_height);
     img.loadPixels();
     // configure noise
@@ -133,35 +145,24 @@ function evaporateAndUpdate() {
 function computeMovement(x, y) {
     let a = table_terrain[y][x];
     let amount = [[0, 0, 0], [0, 0, 0], [0, 0, 0]];
-    let min = 0;
+    let sum = 0;
     for (let yy = -1; yy <= 1; yy++) {
         for (let xx = -1; xx <= 1; xx++) {
             amount[yy + 1][xx + 1] = table_terrain[y + yy][x + xx] - a;
             amount[yy + 1][xx + 1] = Math.min(amount[yy + 1][xx + 1], 0);
-            min = Math.min(amount[yy + 1][xx + 1], min);
+            sum  += amount[yy + 1][xx + 1];
         }
     }
+    if (sum > -0.2) return [[0, 0, 0], [0, 0, 0], [0, 0, 0]];
     for (let yy = 0; yy < 3; yy++) {
         for (let xx = 0; xx < 3; xx++) {
-            if (amount[yy][xx] > min) amount[yy][xx] = 0;
-            else amount[yy][xx] = Math.abs(min);
+            if (amount[yy][xx] > 0) amount[yy][xx] = 0;
+            else amount[yy][xx] = amount[yy][xx] / sum;
         }
     }
     return amount;
 }
 
-function computeMovementDirection(x, y) {
-    let a = computeMovement(x, y);
-    let result = {x: 0, y: 0};
-    for (let yy = 0; yy < 3; yy++) {
-        for (let xx = 0; xx < 3; xx++) {
-            if (a[yy][xx] > 0.1) {
-                result = {x: xx - 1, y: yy - 1};
-            }
-        }
-    }
-    return result;
-}
 
 // using sobel
 function getGradient(x, y) {
@@ -211,11 +212,17 @@ function createHeightMap() {
  * Writes a value into an image using the faster method.
  */
 function writeColor(image, x, y, val) {
+    writeRGBColor(image, x, y, val, val, val, 255);
+}
+/**
+ * Writes a value into an image using the faster method.
+ */
+function writeRGBColor(image, x, y, r, g, b, a) {
     let index = (x + y * noise_width) * 4;
-    image.pixels[index] = val;
-    image.pixels[index + 1] = val;
-    image.pixels[index + 2] = val;
-    image.pixels[index + 3] = 255;
+    image.pixels[index] = r;
+    image.pixels[index + 1] = g;
+    image.pixels[index + 2] = b;
+    image.pixels[index + 3] = a;
 }
 
 /**
