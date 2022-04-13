@@ -208,6 +208,8 @@ function createHeightMap() {
  */
 function writeColor(image, x, y, val) {
     writeRGBColor(image, x, y, val, val, val, 255);
+    // false color
+    // writeRGBColor(image, x, y, map(val, 0, 128, 0, 255), map(val, 129, 255, 255, 0), 0, 255);
 }
 /**
  * Writes a value into an image using the faster method.
