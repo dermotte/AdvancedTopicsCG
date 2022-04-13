@@ -11,9 +11,10 @@ let showOriginal = false;
 let erode = true;
 let showWater = true;
 // hydraulic erosion parameters
-let rain_amount = 12;   // how much rain per iteration
+let rain_amount_start = 20;   // how much rain per iteration
+let evaporated_water = 0;
 let solubility = 0.2;   // how much soil is eroded by one unit of water
-let evaporation = 1.3; // how much water evaporates each step?
+let evaporation = 0.5; // how much water evaporates each step?
 let capacity = 0.5;    // how much soil can be carried by one unit of water
 let deposition = 0.2;  // how much soil is deposited if water does not move
 let iterations = 0;    // current number of iterations
@@ -69,8 +70,10 @@ function erodeHeightMap() {
     for (let y = 0; y < noise_height; y++) {
         for (let x = 0; x < noise_width; x++) {
             // rainfall
-            if (iterations % 10 == 0) // every n-th iteration it rains ..
-                table_water[y][x] += rain_amount;
+            if (iterations % 10 == 0) { // every n-th iteration it rains ..
+                if (evaporated_water < 1) table_water[y][x] += rain_amount_start;
+                else table_water[y][x] += evaporated_water / (noise_height*noise_width);
+            }
             // erosion
             // let eroded_sediment = table_water[y][x] * solubility;
             // eroded_sediment = min(table_terrain[y][x], eroded_sediment); // make sure not more than available is eroded
@@ -116,10 +119,13 @@ function erodeHeightMap() {
 
 function evaporateAndUpdate() {
     let maxWater = 0;
+    evaporated_water = 0;
     for (let y = 0; y < noise_height; y++) {
         for (let x = 0; x < noise_width; x++) {
             // evaporation in the water table
-            table_water[y][x] -= table_water[y][x] * evaporation;
+            let tmp_water = table_water[y][x] * evaporation;
+            evaporated_water += tmp_water
+            table_water[y][x] -= tmp_water;
             // table_water[y][x] -= Math.min(evaporation, table_water[y][x]);
             maxWater = Math.max(table_water[y][x], maxWater);
             // dropping sediment according to current water level
