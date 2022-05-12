@@ -11,7 +11,7 @@ let erosionThreshold = 4;
 let iterations = 0;
 
 function setup() {
-    createCanvas(640, 360);
+    createCanvas(1280, 720);
     buffer = createImage(width, height);
     // let canvas = createCanvas(1280, 720, WEBGL);
     buffer = createHeightMap();

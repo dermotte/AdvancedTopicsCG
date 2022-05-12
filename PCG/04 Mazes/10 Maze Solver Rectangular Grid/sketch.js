@@ -5,8 +5,8 @@ let steps = 100000;   // maximum number of steps, just to be sure
 
 let solver;
 
-let size_x = 12;
-let size_y = 9;
+let size_x = 36;
+let size_y = 27;
 blockSizeX = 20;
 blockSizeY = 20;
 
@@ -121,7 +121,8 @@ class Solver {
         // if there is one not visited yet, put it on the stack
         if (unvisited.length>0) {
             this.trace.push(this.current);
-            this.current =  unvisited[Math.floor(Math.random() * unvisited.length)];
+            this.current =  unvisited[0];
+            // this.current =  unvisited[Math.floor(Math.random() * unvisited.length)];
             if (this.current === this.end)
                 this.solved = true;
         } else {
