@@ -154,56 +154,7 @@ function createPuzzle(grid) {
 }
 
 
-// from https://dev.to/christinamcmahon/use-backtracking-algorithm-to-solve-sudoku-270
-// function sudokuSolver(matrix) {
-//     if (solveSudoku(matrix) === true) {
-//         return matrix;
-//     }
-//     return 'NO SOLUTION';
-// }
-// function solveSudoku(matrix) {
-//     let row = 0;
-//     let col = 0;
-//     let checkBlankSpaces = false;
-//
-//     /* verify if sudoku is already solved and if not solved,
-//     get next "blank" space position */
-//     for (row = 0; row < matrix.length; row++) {
-//         for (col = 0; col < matrix[row].length; col++) {
-//             if (matrix[row][col] === 0) {
-//                 checkBlankSpaces = true;
-//                 break;
-//             }
-//         }
-//         if (checkBlankSpaces === true) {
-//             break;
-//         }
-//     }
-//     // no more "blank" spaces means the puzzle is solved
-//     if (checkBlankSpaces === false) {
-//         return true;
-//     }
-//
-//     // try to fill "blank" space with correct num
-//     for (let num = 1; num <= 9; num++) {
-//         /* isSafe checks that num isn't already present
-//         in the row, column, or 3x3 box (see below) */
-//         if (isSafe(matrix, row, col, num)) {
-//             matrix[row][col] = num;
-//
-//             if (solveSudoku(matrix)) {
-//                 return true;
-//             }
-//
-//             /* if num is placed in incorrect position,
-//             mark as "blank" again then backtrack with
-//             a different num */
-//             matrix[row][col] = 0;
-//         }
-//     }
-//     return false;
-// }
-
+// adapted from https://dev.to/christinamcmahon/use-backtracking-algorithm-to-solve-sudoku-270
 function countSudokuSolutions(matrix, original, count) {
     let row = 0;
     let col = 0;
