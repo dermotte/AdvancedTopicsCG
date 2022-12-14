@@ -144,7 +144,7 @@ function removeNextCell(grid) {
 
 function createPuzzle(grid) {
     let lastStep;
-    for (let i = 0; i<100; i++) {
+    for (let i = 0; i<150; i++) {
         lastStep = copyGrid(grid);
         removeNextCell(grid);
         if (countSudokuSolutions(grid, copyGrid(grid), 0) != 1)
@@ -205,4 +205,4 @@ printGrid(g);
 console.log("---")
 let c = countSudokuSolutions(g, copyGrid(g), 0)
 console.log(c);
-printGrid(g);
+prettyPrintGrid(g);
