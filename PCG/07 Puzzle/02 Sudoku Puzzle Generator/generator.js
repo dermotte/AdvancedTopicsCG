@@ -5,17 +5,17 @@
 
 function createGrid() {
     let grid = [
-        [0, 0, 0,   0, 0, 0,   0, 0, 0],
-        [0, 0, 0,   0, 0, 0,   0, 0, 0],
-        [0, 0, 0,   0, 0, 0,   0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0],
 
-        [0, 0, 0,   0, 0, 0,   0, 0, 0],
-        [0, 0, 0,   0, 0, 0,   0, 0, 0],
-        [0, 0, 0,   0, 0, 0,   0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0],
 
-        [0, 0, 0,   0, 0, 0,   0, 0, 0],
-        [0, 0, 0,   0, 0, 0,   0, 0, 0],
-        [0, 0, 0,   0, 0, 0,   0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0],
     ]
     return grid;
 }
@@ -72,10 +72,10 @@ function boxSafe(grid, row, col, num) {
     let boxStartRow = row - (row % 3)
     let boxStartCol = col - (col % 3)
     let result = true
-    for ( let boxRow of [0,1,2] ) {  // Each box region has 3 rows
-        for ( let boxCol of [0,1,2] ) { // Each box region has 3 columns
+    for (let boxRow of [0, 1, 2]) {  // Each box region has 3 rows
+        for (let boxCol of [0, 1, 2]) { // Each box region has 3 columns
             // Is num is present in box region?
-            if ( grid[boxStartRow + boxRow][boxStartCol + boxCol] === num ) {
+            if (grid[boxStartRow + boxRow][boxStartCol + boxCol] === num) {
                 result = false // If number is found, it is not safe to place
             }
         }
@@ -135,8 +135,8 @@ function createFullSudoku() {
 }
 
 function removeNextCell(grid) {
-    let cell = Math.floor(Math.random()*81);
-    let row = Math.floor(cell/9);
+    let cell = Math.floor(Math.random() * 81);
+    let row = Math.floor(cell / 9);
     let col = parseInt(cell % 9);
     grid[row][col] = 0;
 }
@@ -144,13 +144,13 @@ function removeNextCell(grid) {
 
 function createPuzzle(grid) {
     let lastStep;
-    for (let i = 0; i<150; i++) {
+    for (let i = 0; i < 150; i++) {
         lastStep = copyGrid(grid);
         removeNextCell(grid);
         if (countSudokuSolutions(grid, copyGrid(grid), 0) != 1)
             grid = lastStep; // roll back
     }
-    return(grid);
+    return (grid);
 }
 
 
@@ -196,6 +196,47 @@ function countSudokuSolutions(matrix, original, count) {
     return count;
 }
 
+function writeSVG(grid) {
+    let svg = `<svg xmlns="http://www.w3.org/2000/svg">
+    <svg x="100" y="100">
+        <line x1="0" y1="0" x2="900" y2="0" style="stroke:rgb(0,0,0);stroke-width:4" />
+        <line x1="0" y1="100" x2="900" y2="100" style="stroke:rgb(0,0,0);stroke-width:1" />
+        <line x1="0" y1="200" x2="900" y2="200" style="stroke:rgb(0,0,0);stroke-width:1" />
+        <line x1="0" y1="300" x2="900" y2="300" style="stroke:rgb(0,0,0);stroke-width:4" />
+        <line x1="0" y1="400" x2="900" y2="400" style="stroke:rgb(0,0,0);stroke-width:1" />
+        <line x1="0" y1="500" x2="900" y2="500" style="stroke:rgb(0,0,0);stroke-width:1" />
+        <line x1="0" y1="600" x2="900" y2="600" style="stroke:rgb(0,0,0);stroke-width:4" />
+        <line x1="0" y1="700" x2="900" y2="700" style="stroke:rgb(0,0,0);stroke-width:1" />
+        <line x1="0" y1="800" x2="900" y2="800" style="stroke:rgb(0,0,0);stroke-width:1" />
+        <line x1="0" y1="900" x2="900" y2="900" style="stroke:rgb(0,0,0);stroke-width:4" />
+
+        <line x1="0" y1="0" x2="0" y2="900" style="stroke:rgb(0,0,0);stroke-width:4" />
+        <line x1="100" y1="0" x2="100" y2="900" style="stroke:rgb(0,0,0);stroke-width:1" />
+        <line x1="200" y1="0" x2="200" y2="900" style="stroke:rgb(0,0,0);stroke-width:1" />
+        <line x1="300" y1="0" x2="300" y2="900" style="stroke:rgb(0,0,0);stroke-width:4" />
+        <line x1="400" y1="0" x2="400" y2="900" style="stroke:rgb(0,0,0);stroke-width:1" />
+        <line x1="500" y1="0" x2="500" y2="900" style="stroke:rgb(0,0,0);stroke-width:1" />
+        <line x1="600" y1="0" x2="600" y2="900" style="stroke:rgb(0,0,0);stroke-width:4" />
+        <line x1="700" y1="0" x2="700" y2="900" style="stroke:rgb(0,0,0);stroke-width:1" />
+        <line x1="800" y1="0" x2="800" y2="900" style="stroke:rgb(0,0,0);stroke-width:1" />
+        <line x1="900" y1="0" x2="900" y2="900" style="stroke:rgb(0,0,0);stroke-width:4" />
+`
+    for (let r = 0; r < 9; r++) {
+        let line = "";
+        for (let c = 0; c < 9; c++) {
+            if (grid[r][c] != 0) {
+                let xpos = c * 100 + 50;
+                let ypos = r * 100 + 80;
+                let value = grid[r][c];
+                svg += `\t\t<text text-anchor=\"middle\"  x=\"${xpos}\" y=\"${ypos}\" fill=\"black\" style=\"font-size: 90px\">${value}</text>\n`;
+            }
+        }
+    }
+    svg += `    </svg>
+</svg>`
+    return svg;
+}
+
 
 // main ...
 let g = createFullSudoku();
@@ -206,3 +247,5 @@ console.log("---")
 let c = countSudokuSolutions(g, copyGrid(g), 0)
 console.log(c);
 prettyPrintGrid(g);
+const fs = require('fs');
+fs.writeFileSync("out.svg", writeSVG(g));
