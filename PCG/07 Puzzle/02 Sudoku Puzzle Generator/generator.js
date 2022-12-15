@@ -237,15 +237,29 @@ function writeSVG(grid) {
     return svg;
 }
 
+function countClues(grid) {
+    let count = 0;
+    for (let r = 0; r < 9; r++) {
+        let line = "";
+        for (let c = 0; c < 9; c++) {
+            if (grid[r][c] != 0) {
+                count++;
+            }
+        }
+    }
+    return count;
+}
+
 
 // main ...
 let g = createFullSudoku();
 g = createPuzzle(g);
-console.log("---")
-printGrid(g);
-console.log("---")
+// console.log("---")
+// printGrid(g);
+// console.log("---")
 let c = countSudokuSolutions(g, copyGrid(g), 0)
 console.log(c);
 prettyPrintGrid(g);
+console.log(countClues(g) + " clues in the Sudoku");
 const fs = require('fs');
 fs.writeFileSync("out.svg", writeSVG(g));
