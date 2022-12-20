@@ -142,9 +142,10 @@ function removeNextCell(grid) {
 }
 
 
-function createPuzzle(grid) {
+function createPuzzle(grid, numberOfClues = 46) {
     let lastStep;
-    for (let i = 0; i < 150; i++) {
+    let maxCount = 150;
+    while (--maxCount > 0 && countClues(grid) > numberOfClues) {
         lastStep = copyGrid(grid);
         removeNextCell(grid);
         if (countSudokuSolutions(grid, copyGrid(grid), 0) != 1)
