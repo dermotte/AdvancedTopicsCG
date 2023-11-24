@@ -105,6 +105,7 @@ function setup() {
     grid[sizeX-1][6] = {collapsed: true, dirty: true, tiles: [1]}
     grid[7][0] = {collapsed: true, dirty: true, tiles: [2]}
     grid[5][sizeY-1] = {collapsed: true, dirty: true, tiles: [2]}
+    grid[4][5] = {collapsed: true, dirty: true, tiles: [7]}
     reducePossibleNeighbours();
 }
 

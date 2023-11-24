@@ -47,7 +47,7 @@ let tiles = [
     },
     {
         file: "forest4.png",
-        priority: 1,
+        priority: 30,
         rotation: 0,
         sockets: [
             [3], [3], [3], [3]
