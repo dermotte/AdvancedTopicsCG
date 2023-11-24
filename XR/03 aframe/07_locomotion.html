@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+  <title>A-Frame Demos</title>
+  <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
+  <!-- adding the script -->
+  <script src="https://unpkg.com/aframe-locomotion@0.2.0/dist/aframe-locomotion.umd.min.js"></script>
+</head>
+<body>
+<a-scene>
+  <a-box position="-1 0.5 -3" rotation="0 45 0" color="#4CC3D9" shadow="cast:true"
+         animation="property: object3D.rotation.y; to:180; easing:easeInOutQuad; dur: 2000; loop: true"></a-box>
+  <a-cylinder position="1 0.75 -3" radius="0.5" height="1.5" color="#FFC65D" shadow="cast:true"
+              animation="property: object3D.scale.y; to:2; easing:easeInOutQuad; dur: 2000; loop: true; dir: alternate"
+              animation__2="property: object3D.scale.x; to:0.5; easing:easeInOutQuad; dur: 2000; loop: true; dir: alternate"
+              animation__3="property: object3D.scale.z; to:0.5; easing:easeInOutQuad; dur: 2000; loop: true; dir: alternate">
+  </a-cylinder>
+  <a-plane position="0 0 -4" rotation="-90 0 0" width="30" height="30" color="#666666" shadow="receive:true"></a-plane>
+  <a-entity light="type: directional; castShadow: true;" position="-5 3 1.5"></a-entity>
+  <a-sky color="#ECECEC"></a-sky>
+  <!-- adding the controllers to the camera rig -->
+  <a-entity id="rig">
+    <a-camera id="camera"></a-camera>
+    <!-- Hands -->
+    <a-entity
+            hand-controls="hand: left"
+            smooth-locomotion="target: #rig; reference: #camera">
+    </a-entity>
+    <a-entity
+            hand-controls="hand: right"
+            snap-turn="target: #rig; reference: #camera">
+    </a-entity>
+  </a-entity>
+</a-scene>
+</body>
+</html>
