@@ -3,7 +3,7 @@
 <head>
   <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
 
-  <title>Simple example with controller movement</title>
+  <title>Loading a model and navigating it in VR</title>
 
   <!-- Babylon.js -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/dat-gui/0.6.2/dat.gui.min.js"></script>
@@ -55,7 +55,6 @@
   var startRenderLoop = function (engine, canvas) {
     engine.runRenderLoop(function () {
       if (sceneToRender && sceneToRender.activeCamera) {
-        box.rotation.y = n;
         n += 0.01;
         sceneToRender.render();
       }
@@ -85,27 +84,26 @@
     camera.attachControl(canvas, true);
     // This creates a light, aiming 0,1,0 - to the sky (non-mesh)
     var light = new BABYLON.HemisphericLight("light", new BABYLON.Vector3(0, 1, 0), scene);
-    // Default intensity is 1. Let's dim the light a small amount
-    light.intensity = 0.7;
-    // Our built-in 'sphere' shape.
-    box = BABYLON.MeshBuilder.CreateBox("box", {size: 2}, scene);
-    // Move the sphere upward 1/2 its height
-    box.position.y = 1;
+    light.intensity = 0.8;
     const ground1 = new BABYLON.Mesh.CreateGround('ground1', 200, 200, 200, scene);
-    ground1.position.y = 0.001;
+    ground1.position.y = -0.001;
     ground1.checkCollisions = true;
     // scene.createDefaultEnvironment();
+    BABYLON.SceneLoader.Append("./", "sample.glb", scene, function (scene) {
+      // do something with the scene
+    });
 
     // XR
     const xr = await scene.createDefaultXRExperienceAsync({
-      floorMeshes: [ground1]
+      floorMeshes: [ground1],
+      disableTeleportation: true
     });
     // set up movement
     const featureManager = xr.baseExperience.featuresManager;
-    featureManager.enableFeature(BABYLON.WebXRFeatureName.TELEPORTATION, "stable" /* or latest */, {
+    const movementFeature = featureManager.enableFeature(BABYLON.WebXRFeatureName.MOVEMENT, 'latest', {
       xrInput: xr.input,
       // add options here
-      floorMeshes: [ground1],
+      movementOrientationFollowsViewerPose: true, // default true
     });
 
     setupCameraForCollisions(xr.input.xrCamera);
