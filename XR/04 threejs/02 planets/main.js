@@ -4,7 +4,13 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
 
-const renderer = new THREE.WebGLRenderer();
+const renderer = new THREE.WebGLRenderer({
+    antialias: true,              // Enable anti-aliasing
+    powerPreference: "high-performance",
+    precision: "highp",           // High precision rendering
+    logarithmicDepthBuffer: true, // Better depth precision
+    stencil: false               // Disable unused stencil buffer
+});
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.setAnimationLoop(animate);
 document.body.appendChild(renderer.domElement);
@@ -49,6 +55,7 @@ camera.position.z = 12;
 const controls = new OrbitControls(camera, renderer.domElement);
 controls.update()
 
+// creates a new planet for the animated solar system.
 function newPlanet(size, h, w, planet_color) {
     const sun_geometry = new THREE.SphereGeometry(size, h, w);
     const sun_material = new THREE.MeshStandardMaterial({ color: planet_color, roughness: 0.4 });
@@ -57,15 +64,12 @@ function newPlanet(size, h, w, planet_color) {
 }
 
 function animate() {
-	// cube.rotation.x += 0.01;
-	// cube.rotation.y += 0.01;
-
 	controls.update();
-
+    // animating the positions of the planets with different speed
     earth.position.set(2.7 * Math.sin(f), 0, 2.7 * Math.cos(f))
     mercury.position.set(1.5 * Math.sin(f*1.67), 0, 1.5 * Math.cos(f*1.67))
     venus.position.set(2 * Math.sin(f*1.169), 0, 2 * Math.cos(f*1.169))
-
+    // updating progress
     f += 0.01;
 
 	renderer.render(scene, camera);

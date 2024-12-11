@@ -33,18 +33,21 @@ scene.add(front_light);
 const amlight = new THREE.AmbientLight(0x404040);
 scene.add(amlight);
 
-
+// camera position
 camera.position.z = 5;
 
 // add controls
-const controls = new OrbitControls(camera, renderer.domElement);
+const controls = new OrbitControls(camera, 
+			renderer.domElement);
 controls.update()
 
+// render loop
 function animate() {
+	// cube animation
 	cube.rotation.x += 0.01;
 	cube.rotation.y += 0.01;
-
+	// updating the view based on controls
 	controls.update();
-
+	// rendering the scenes
 	renderer.render(scene, camera);
 }
