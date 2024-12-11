@@ -13,12 +13,13 @@
  * - VRButton for VR functionality
  * - tree_oak.glb model file
  * 
- * Made by M. Lux with the help of AI.
+ * Made by M. Lux with the help of AI to speed up development
  */
 
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { VRButton } from 'three/addons/webxr/VRButton.js';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
 // Configuration object for scene parameters
 const CONFIG = {
@@ -26,18 +27,18 @@ const CONFIG = {
     spawnAreaSize: 20,   // Area where trees can spawn (must be less than groundSize)
     numObjects: 100,     // Number of trees to generate
     minDistance: 0.5,    // Minimum distance between trees
-    modelScale: {        
+    modelScale: {
         min: 0.75,      // Minimum tree scale
         max: 1.25       // Maximum tree scale
     },
     sunCycle: {
         radius: 40,      // Orbit radius of the sun
         speed: 0.0001,   // Angular velocity of sun rotation
-        heightRange: {   
+        heightRange: {
             min: 5,     // Minimum sun height
             max: 30     // Maximum sun height
         },
-        intensity: {    
+        intensity: {
             min: 0.2,   // Minimum light intensity (night)
             max: 3.0    // Maximum light intensity (day)
         }
@@ -103,6 +104,9 @@ function generatePositions(numPositions, spawnSize, minDistance) {
 
 // Scene setup
 const scene = new THREE.Scene();
+let fogColor = 0x666666
+scene.background = new THREE.Color( fogColor );
+scene.fog = new THREE.FogExp2( fogColor, 0.1 );
 const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
 
 // Configure renderer with high-quality settings
@@ -158,6 +162,12 @@ ground.position.y = 0;
 ground.receiveShadow = true;
 scene.add(ground);
 
+// Set initial camera position
+camera.position.set(4, 0.25, -3);
+camera.lookAt(new THREE.Vector3(0, 0, 0));
+
+const controls = new OrbitControls( camera, renderer.domElement );
+
 // Generate tree positions
 const positions = generatePositions(
     CONFIG.numObjects,
@@ -193,9 +203,7 @@ loader.load('tree_oak.glb', function (gltf) {
     console.error(error);
 });
 
-// Set initial camera position
-camera.position.set(3, 1, -3);
-camera.lookAt(new THREE.Vector3(0, 0, 0));
+
 
 /**
  * Updates sun position and lighting based on time
@@ -231,12 +239,13 @@ function updateSun(time) {
     );
 
     dirLight.intensity = intensity;
-    amlight.intensity = intensity * 0.1 + 0.1;  // Base ambient light plus dynamic component
+    amlight.intensity = intensity * 0.1 + 0.9;  // Base ambient light plus dynamic component
 }
 
 // Animation loop
 function animate(time) {
     updateSun(time);
+    controls.update(time);
     renderer.render(scene, camera);
 }
 
